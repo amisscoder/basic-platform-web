@@ -1,17 +1,13 @@
 import type { RouteLocationNormalized } from 'vue-router';
 import { defineStore } from 'pinia';
-import {
-  DEFAULT_ROUTE,
-  DEFAULT_ROUTE_NAME,
-  REDIRECT_ROUTE_NAME,
-} from '@/router/constants';
+import { REDIRECT_ROUTE_NAME } from '@/router/constants';
 import { isString } from '@/utils/is';
 import { TabBarState, TagProps } from './types';
 
 const formatTag = (route: RouteLocationNormalized): TagProps => {
   const { name, meta, fullPath, query } = route;
   return {
-    title: meta.locale || '',
+    title: meta.title as string,
     name: String(name),
     fullPath,
     query,
@@ -21,10 +17,11 @@ const formatTag = (route: RouteLocationNormalized): TagProps => {
 
 const BAN_LIST = [REDIRECT_ROUTE_NAME];
 
-const useAppStore = defineStore('tabBar', {
+const useTabBarStore = defineStore('tabBar', {
   state: (): TabBarState => ({
-    cacheTabList: new Set([DEFAULT_ROUTE_NAME]),
-    tagList: [DEFAULT_ROUTE],
+    cacheTabList: new Set(),
+    tagList: [],
+    home: <TagProps>{},
   }),
 
   getters: {
@@ -37,9 +34,18 @@ const useAppStore = defineStore('tabBar', {
   },
 
   actions: {
+    setHomeTag(tag: TagProps) {
+      this.home = tag;
+    },
     updateTabList(route: RouteLocationNormalized) {
       if (BAN_LIST.includes(route.name as string)) return;
-      this.tagList.push(formatTag(route));
+
+      const tag = formatTag(route);
+      if (!this.tagList.length) {
+        this.setHomeTag(tag);
+      }
+
+      this.tagList.push(tag);
       if (!route.meta.ignoreCache) {
         this.cacheTabList.add(route.name as string);
       }
@@ -63,12 +69,16 @@ const useAppStore = defineStore('tabBar', {
         .map((el) => el.name)
         .forEach((x) => this.cacheTabList.add(x));
     },
-    resetTabList() {
-      this.tagList = [DEFAULT_ROUTE];
+    clearTab() {
+      this.tagList = [];
       this.cacheTabList.clear();
-      this.cacheTabList.add(DEFAULT_ROUTE_NAME);
+    },
+    resetTab() {
+      this.tagList = [this.home];
+      this.cacheTabList.clear();
+      this.addCache(this.home.name);
     },
   },
 });
 
-export default useAppStore;
+export default useTabBarStore;

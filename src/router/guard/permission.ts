@@ -1,16 +1,47 @@
 import type { Router } from 'vue-router';
 import NProgress from 'nprogress'; // progress bar
 
-import { useAppStore } from '@/store';
+import { useAppStore, useTabBarStore } from '@/store';
 import { getMenuList } from '@/api/basic/user';
+import { TagProps } from '@/store/modules/tab-bar/types';
 import Parser from '../routes/parser';
 import { NOT_FOUND_ROUTE, REDIRECT_MAIN } from '../routes/base';
+import { Home } from '../types';
 
 export const WHITE_LIST = ['notFound', 'login'];
+
+export function getHomeByMenu(router: Router): Home | undefined {
+  const appStore = useAppStore();
+  const menus = appStore.appMenu;
+
+  const menu = menus[0];
+  let { path } = menu;
+  if (menu.redirect) {
+    path = menu.redirect as string;
+  }
+  const hr = router.getRoutes().find((route) => route.path === path);
+  if (!hr) {
+    return undefined;
+  }
+  return <Home>{
+    keyword: hr.name,
+    path: hr.path,
+    title: hr.meta.title,
+  };
+}
+
+export function homeTransTag(home: Home): TagProps {
+  return <TagProps>{
+    fullPath: home.path,
+    title: home.title,
+    name: home.keyword,
+  };
+}
 
 export default function setupPermissionGuard(router: Router) {
   router.beforeEach(async (to, from, next) => {
     const appStore = useAppStore();
+    const tabStore = useTabBarStore();
 
     // 白名单直接路由
     if (WHITE_LIST.includes(to.name as string)) {
@@ -43,7 +74,7 @@ export default function setupPermissionGuard(router: Router) {
       appStore.setMenus(parser.GetMenu());
 
       // 保存主页
-      appStore.setHomes(parser.GetHomePath());
+      appStore.setHomes(parser.GetHome());
 
       // 设置应用列表
       appStore.setApps(parser.GetApps());
@@ -51,13 +82,20 @@ export default function setupPermissionGuard(router: Router) {
       // 设置默认的应用
       appStore.setCurrentApp();
 
-      if (to.path === '/') {
-        if (appStore.appHome) {
-          next({ path: appStore.appHome, replace: true });
-        } else {
-          const menu = appStore.appMenu;
-          next({ path: menu[0].path, replace: true });
+      // 设置默认首页
+      let home = appStore.appHome;
+      if (!home) {
+        home = getHomeByMenu(router);
+        if (home) {
+          appStore.setAppHome(appStore.currentAppKey, home);
+          // 设置首页tag
+          tabStore.setHomeTag(homeTransTag(home));
         }
+      }
+
+      // 默认跳转到首页
+      if (to.path === '/') {
+        next({ path: appStore.appHomePath, replace: true });
       } else {
         next({ ...to, replace: true });
       }

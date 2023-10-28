@@ -12,7 +12,7 @@ export interface Menu {
   is_affix: boolean;
   is_home: boolean;
   permission?: string;
-  name?: string | symbol;
+  keyword: string;
   meta?: RouteMeta;
   redirect?: string;
   weight: number;

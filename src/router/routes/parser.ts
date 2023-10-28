@@ -1,7 +1,7 @@
 import type { RouteRecordNormalized } from 'vue-router';
 import { Menu } from '@/api/basic/types/menu';
 import { DEFAULT_LAYOUT } from './base';
-import { App, Component } from '../types';
+import { App, Component, Home } from '../types';
 
 class Parser {
   // 应用名称集合
@@ -11,7 +11,7 @@ class Parser {
   menus: Map<string, RouteRecordNormalized[]> = new Map();
 
   // 首页路由
-  homes: Map<string, string> = new Map();
+  homes: Map<string, Home> = new Map();
 
   // 组件
   components: Record<string, () => Promise<unknown>>;
@@ -23,7 +23,7 @@ class Parser {
   permissions: string[];
 
   // 临时变量homePath
-  homePath = '';
+  home?: Home;
 
   // 初始化构造函数
   constructor(menus: Menu[]) {
@@ -45,7 +45,7 @@ class Parser {
         // 获取指令/路由/首页
         const routers: RouteRecordNormalized[] = [];
         this.handler(menu.children, routers);
-        this.homes.set(menu.app, this.homePath);
+        if (this.home) this.homes.set(menu.app, { ...this.home });
         this.menus.set(menu.app, routers);
         this.routers = this.routers.concat(routers);
       }
@@ -62,7 +62,7 @@ class Parser {
   };
 
   // 获取首页路由
-  GetHomePath = () => {
+  GetHome = () => {
     return this.homes;
   };
 
@@ -85,9 +85,17 @@ class Parser {
     menus.forEach((menu) => {
       // 处理菜单
       let router: any = null;
+      this.home = undefined;
 
       if (menu.type === 'M') {
-        if (menu.is_home) this.homePath = menu.path; // 获取首页
+        // 获取首页
+        if (menu.is_home) {
+          this.home = {
+            path: menu.path,
+            keyword: menu.keyword as string,
+            title: menu.title,
+          };
+        }
 
         // 加载组件
         let component: Component;
@@ -103,10 +111,10 @@ class Parser {
 
         router = {
           path: menu.path,
-          name: menu.name,
+          name: menu.keyword,
           component: menu.component === 'Layout' ? DEFAULT_LAYOUT : component,
           redirect: menu.redirect,
-          activeMenu: menu.name,
+          activeMenu: menu.keyword,
           children: [],
           meta: {
             app: menu.app,

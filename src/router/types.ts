@@ -41,3 +41,9 @@ export interface App {
   icon: string;
   keyword: string;
 }
+
+export interface Home {
+  path: string;
+  keyword: string;
+  title: string;
+}

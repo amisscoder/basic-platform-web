@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import type { RouteRecordNormalized } from 'vue-router';
 import defaultSettings from '@/config/settings.json';
-import { App } from '@/router/types';
+import { App, Home } from '@/router/types';
 import { AppState } from './types';
 
 const useAppStore = defineStore('app', {
@@ -34,10 +34,32 @@ const useAppStore = defineStore('app', {
       return state.permissions;
     },
     appHome(state: AppState) {
-      return state.homes.get(state.app) || '';
+      return state.homes.get(state.app);
     },
-    currentApp(state: AppState) {
+    appHomePath(state: AppState) {
+      const home = state.homes.get(state.app);
+      if (home) {
+        return home.path;
+      }
+
+      const menus = state.menus.get(state.app);
+      if (menus) {
+        return menus[0].path;
+      }
+
+      return '';
+    },
+    currentAppKey(state: AppState) {
       return state.app;
+    },
+    currentAppinfo(state: AppState) {
+      let app = <App>{};
+      state.apps.forEach((item) => {
+        if (item.keyword === state.app) {
+          app = item;
+        }
+      });
+      return app;
     },
   },
 
@@ -64,7 +86,7 @@ const useAppStore = defineStore('app', {
     toggleMenu(value: boolean) {
       this.hideMenu = value;
     },
-    clearMenu() {
+    clearApp() {
       this.menus = new Map();
     },
     setApps(apps: App[]) {
@@ -76,8 +98,11 @@ const useAppStore = defineStore('app', {
     setPermissions(ps: string[]) {
       this.permissions = ps;
     },
-    setHomes(homes: Map<string, string>) {
+    setHomes(homes: Map<string, Home>) {
       this.homes = homes;
+    },
+    setAppHome(app: string, home: Home) {
+      this.homes.set(app, home);
     },
     setCurrentApp(app?: string) {
       if (app) {

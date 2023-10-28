@@ -75,7 +75,7 @@ const useUserStore = defineStore('user', {
       this.resetInfo();
       clearToken();
       removeRouteListener();
-      appStore.clearServerMenu();
+      appStore.clearApp();
     },
     // Logout
     async logout() {

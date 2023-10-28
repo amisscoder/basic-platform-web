@@ -10,7 +10,7 @@
       @click="goto(itemData)"
     >
       <span class="tag-link">
-        {{ $t(itemData.title) }}
+        {{ itemData.title }}
       </span>
       <span
         class="arco-icon-hover arco-tag-icon-hover arco-icon-hover-size-medium arco-tag-close-btn"
@@ -59,9 +59,9 @@
 <script lang="ts" setup>
   import { PropType, computed } from 'vue';
   import { useRouter, useRoute } from 'vue-router';
-  import { useTabBarStore } from '@/store';
+  import { useTabBarStore, useAppStore } from '@/store';
   import type { TagProps } from '@/store/modules/tab-bar/types';
-  import { DEFAULT_ROUTE_NAME, REDIRECT_ROUTE_NAME } from '@/router/constants';
+  import { REDIRECT_ROUTE_NAME } from '@/router/constants';
 
   // eslint-disable-next-line no-shadow
   enum Eaction {
@@ -89,6 +89,7 @@
   const router = useRouter();
   const route = useRoute();
   const tabBarStore = useTabBarStore();
+  const appStore = useAppStore();
 
   const goto = (tag: TagProps) => {
     router.push({ ...tag });
@@ -161,8 +162,8 @@
       });
       tabBarStore.addCache(itemData.name);
     } else {
-      tabBarStore.resetTabList();
-      router.push({ name: DEFAULT_ROUTE_NAME });
+      tabBarStore.resetTab();
+      router.push({ path: appStore.appHomePath });
     }
   };
 </script>

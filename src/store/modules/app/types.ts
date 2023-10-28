@@ -1,4 +1,4 @@
-import { App } from '@/router/types';
+import { App, Home } from '@/router/types';
 import type { RouteRecordNormalized } from 'vue-router';
 
 export interface AppState {
@@ -18,7 +18,7 @@ export interface AppState {
   menus: Map<string, RouteRecordNormalized[]>;
   permissions: string[];
   apps: App[];
-  homes: Map<string, string>;
+  homes: Map<string, Home>;
   app: string;
   [key: string]: unknown;
 }
