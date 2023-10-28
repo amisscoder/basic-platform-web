@@ -11,7 +11,6 @@
   export default defineComponent({
     emit: ['collapse'],
     setup() {
-      // const { t } = useI18n();
       const appStore = useAppStore();
       const router = useRouter();
       const route = useRoute();

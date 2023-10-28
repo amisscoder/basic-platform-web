@@ -80,18 +80,18 @@ export default function setupPermissionGuard(router: Router) {
       appStore.setApps(parser.GetApps());
 
       // 设置默认的应用
-      appStore.setCurrentApp();
+      const curRouter = router
+        .getRoutes()
+        .find((route) => route.path === to.path);
+      appStore.setCurrentApp(curRouter?.meta.app);
 
       // 设置默认首页
       let home = appStore.appHome;
       if (!home) {
         home = getHomeByMenu(router);
-        if (home) {
-          appStore.setAppHome(appStore.currentAppKey, home);
-          // 设置首页tag
-          tabStore.setHomeTag(homeTransTag(home));
-        }
+        appStore.setAppHome(appStore.currentAppKey, home as Home);
       }
+      tabStore.setHomeTag(homeTransTag(home as Home));
 
       // 默认跳转到首页
       if (to.path === '/') {

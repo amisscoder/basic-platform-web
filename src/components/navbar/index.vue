@@ -1,6 +1,6 @@
 <template>
   <div class="navbar">
-    <div class="left-side">
+    <div class="left-side" :style="{ width: appStore.menuWidth + 'px' }">
       <a-space>
         <img
           alt="logo"
@@ -10,17 +10,17 @@
           :style="{ margin: 0, fontSize: '18px' }"
           :heading="5"
         >
-          Arco Pro
+          {{ appStore.currentAppinfo.title }}
         </a-typography-title>
         <icon-menu-fold
-          v-if="!topMenu && appStore.device === 'mobile'"
+          v-if="appStore.device === 'mobile'"
           style="font-size: 22px; cursor: pointer"
           @click="toggleDrawerMenu"
         />
       </a-space>
     </div>
     <div class="center-side">
-      <Menu v-if="topMenu" />
+      <App></App>
     </div>
     <ul class="right-side">
       <li>
@@ -126,13 +126,13 @@
   </div>
 </template>
 
-<script lang="ts" setup>
+<script lang="tsx" setup>
   import { computed, ref, inject } from 'vue';
   import { Message } from '@arco-design/web-vue';
   import { useDark, useToggle, useFullscreen } from '@vueuse/core';
   import { useAppStore, useUserStore } from '@/store';
   import useUser from '@/hooks/user';
-  import Menu from '@/components/menu/index.vue';
+  import App from './app.vue';
   import MessageBox from '../message-box/index.vue';
 
   const appStore = useAppStore();
@@ -145,7 +145,7 @@
   const theme = computed(() => {
     return appStore.theme;
   });
-  const topMenu = computed(() => appStore.topMenu && appStore.menu);
+
   const isDark = useDark({
     selector: 'body',
     attribute: 'arco-theme',
