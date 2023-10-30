@@ -1,5 +1,5 @@
 <script lang="tsx">
-  import { defineComponent, h, compile, computed } from 'vue';
+  import { defineComponent, h, compile } from 'vue';
   import { useAppStore, useTabBarStore } from '@/store';
   import { App, Home } from '@/router/types';
   import { getHomeByMenu, homeTransTag } from '@/router/guard/permission';
@@ -48,8 +48,6 @@
         return travel(appStore.apps);
       };
 
-      console.log(appStore.currentAppKey);
-
       return () => (
         <a-menu mode="horizontal" selected-keys={[appStore.currentAppKey]}>
           {renderSubMenu()}
@@ -58,3 +56,9 @@
     },
   });
 </script>
+
+<style lang="less">
+  .arco-menu-icon {
+    margin-right: 0px;
+  }
+</style>

@@ -105,12 +105,7 @@ const useAppStore = defineStore('app', {
       this.homes.set(app, home);
     },
     setCurrentApp(app?: string) {
-      console.log(app);
-      if (app) {
-        this.app = app;
-      } else {
-        this.app = this.apps[0].keyword;
-      }
+      this.app = app || this.apps[0].keyword;
     },
   },
 });

@@ -3,10 +3,11 @@ import {
   login as userLogin,
   logout as userLogout,
   getUserInfo,
-} from '@/api/basic/user';
+} from '@/api/basic/auth';
 import { setToken, clearToken } from '@/utils/auth';
 import { removeRouteListener } from '@/utils/route-listener';
-import { LoginData } from '@/api/basic/types/user';
+import { LoginReq } from '@/api/basic/types/auth';
+import rsa from '@/utils/rsa';
 import { UserState } from './types';
 import useAppStore from '../app';
 
@@ -61,9 +62,16 @@ const useUserStore = defineStore('user', {
     },
 
     // Login
-    async login(loginForm: LoginData) {
+    async login(req: LoginReq) {
+      const info = {
+        ...req,
+        password: rsa.encrypt({
+          password: req.password,
+          time: new Date().getTime(),
+        }),
+      };
       try {
-        const res = await userLogin(loginForm);
+        const res = await userLogin(info);
         setToken(res.data.token);
       } catch (err) {
         clearToken();

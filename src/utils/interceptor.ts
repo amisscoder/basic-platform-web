@@ -1,71 +1,102 @@
 import axios from 'axios';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 import { Message, Modal } from '@arco-design/web-vue';
-import { useUserStore } from '@/store';
-import { getToken } from '@/utils/auth';
+import { useUserStore, useAppStore } from '@/store';
+import { getToken, isLogin, setToken } from '@/utils/auth';
+import { refreshToken } from '@/api/basic/auth';
 
 export interface HttpResponse<T = unknown> {
-  status: number;
-  msg: string;
   code: number;
+  message: string;
   data: T;
 }
 
 if (import.meta.env.VITE_API_BASE_URL) {
   axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
+  axios.defaults.withCredentials = true;
+  axios.defaults.timeout = 10000;
 }
 
 axios.interceptors.request.use(
   (config: AxiosRequestConfig) => {
-    // let each request carry token
-    // this example using the JWT token
-    // Authorization is a custom headers key
-    // please modify it according to the actual situation
-    const token = getToken();
-    if (token) {
+    if (isLogin()) {
+      const token = getToken();
       if (!config.headers) {
         config.headers = {};
       }
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = token as string;
     }
     return config;
   },
   (error) => {
-    // do something
     return Promise.reject(error);
   }
 );
-// add response interceptors
+
+// 是否正在刷新的标记
+let isRefresh = false;
+// 重试队列，每一项将是一个待执行的函数形式
+let requests: any = [];
+// 是否正在退出登陆
+let isLogout = false;
+
 axios.interceptors.response.use(
   (response: AxiosResponse<HttpResponse>) => {
     const res = response.data;
-    // if the custom code is not 20000, it is judged as an error.
-    if (res.code !== 20000) {
-      Message.error({
-        content: res.msg || 'Error',
-        duration: 5 * 1000,
-      });
-      // 50008: Illegal token; 50012: Other clients logged in; 50014: Token expired;
-      if (
-        [50008, 50012, 50014].includes(res.code) &&
-        response.config.url !== '/api/user/info'
-      ) {
+    if (res.code === 200) {
+      return res;
+    }
+
+    // 处理需要重新登陆的错误
+    if (res.code === 4000) {
+      if (!isLogout) {
+        isLogout = true;
         Modal.error({
-          title: 'Confirm logout',
-          content:
-            'You have been logged out, you can cancel to stay on this page, or log in again',
-          okText: 'Re-Login',
+          title: '重新登陆提醒',
+          content: res.message,
+          okText: '重新登陆',
           async onOk() {
             const userStore = useUserStore();
-
             await userStore.logout();
             window.location.reload();
+            isLogout = false;
           },
         });
       }
-      return Promise.reject(new Error(res.msg || 'Error'));
+      return Promise.reject(new Error(res.message || 'Error'));
     }
-    return res;
+
+    // 重新登陆过期处理
+    if (res.code === 4001) {
+      const { config } = response;
+      if (!isRefresh) {
+        isRefresh = true;
+        return refreshToken()
+          .then((resToken) => {
+            // 处理刷新成功
+            setToken(resToken.data.token);
+            requests.forEach((cb: any) => cb(resToken.data.token));
+            requests = [];
+            return axios(config);
+          })
+          .finally(() => {
+            isRefresh = false;
+          });
+      }
+
+      return new Promise((resolve) => {
+        requests.push(() => {
+          resolve(axios(config));
+        });
+      });
+    }
+
+    // 通用错误处理逻辑
+    Message.error({
+      content: res.message || 'Error',
+      duration: 5 * 1000,
+    });
+    return Promise.reject(new Error(res.message || 'Error'));
   },
   (error) => {
     Message.error({

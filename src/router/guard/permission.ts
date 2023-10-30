@@ -2,7 +2,7 @@ import type { Router } from 'vue-router';
 import NProgress from 'nprogress'; // progress bar
 
 import { useAppStore, useTabBarStore } from '@/store';
-import { getMenuList } from '@/api/basic/user';
+import { getMenuList } from '@/api/basic/auth';
 import { TagProps } from '@/store/modules/tab-bar/types';
 import Parser from '../routes/parser';
 import { NOT_FOUND_ROUTE, REDIRECT_MAIN } from '../routes/base';

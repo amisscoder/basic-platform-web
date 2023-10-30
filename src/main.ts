@@ -15,6 +15,9 @@ import '@/utils/interceptor';
 
 const app = createApp(App);
 
+app.config.globalProperties.$staticUrl = `/`;
+app.config.globalProperties.$logo = '/logo.png';
+
 app.use(ArcoVue, {});
 app.use(ArcoVueIcon);
 
